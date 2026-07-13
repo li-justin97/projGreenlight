@@ -13,6 +13,7 @@ MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 ICONSET_DIR="$RESOURCES_DIR/Greenlight.iconset"
 ICON_PATH="$RESOURCES_DIR/Greenlight.icns"
+ICON_SOURCE="$ROOT_DIR/Assets/AppIconSource.png"
 
 cd "$ROOT_DIR"
 
@@ -33,7 +34,7 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$EXECUTABLE" "$MACOS_DIR/GreenlightApp"
 chmod +x "$MACOS_DIR/GreenlightApp"
 
-swift "$ROOT_DIR/scripts/make-app-icon.swift" "$ICONSET_DIR" "$ICON_PATH"
+swift "$ROOT_DIR/scripts/make-app-icon.swift" "$ICON_SOURCE" "$ICONSET_DIR" "$ICON_PATH"
 rm -rf "$ICONSET_DIR"
 
 cat > "$CONTENTS_DIR/Info.plist" <<'PLIST'
