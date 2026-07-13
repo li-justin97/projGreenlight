@@ -32,6 +32,8 @@ scripts/package-app.sh
 
 The packaged app is written to `outputs/Greenlight.app`, with a zipped copy at `outputs/Greenlight-0.1.0.zip`. These generated artifacts are ignored by git.
 
+The bundle includes a generated Greenlight app icon and is ad-hoc signed for local testing. For a public release, use Developer ID signing and notarization.
+
 ## Event Bridge
 
 Greenlight watches:
@@ -59,6 +61,18 @@ Supported tools:
 - `claude`
 - `codex`
 - `other`
+
+## Claude and Codex Connection Status
+
+Greenlight has the local event bridge and UI plumbing now. It does not yet automatically install Claude Code or Codex hooks.
+
+Current options:
+
+- Manual/test integration: append JSONL events to the bridge file.
+- Claude Code next step: install hooks for lifecycle events such as `SessionStart`, `Notification`, `Stop`, and `StopFailure`.
+- Codex next step: add a supported hook or wrapper once the local Codex extension point is confirmed.
+
+For now, onboarding shows where the bridge lives and how hooks should report status. The automatic “Connect Claude / Connect Codex” installer is still future work.
 
 ## Release Notes
 

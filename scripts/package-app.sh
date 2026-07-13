@@ -11,6 +11,8 @@ ZIP_PATH="$ROOT_DIR/outputs/Greenlight-0.1.0.zip"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
+ICONSET_DIR="$RESOURCES_DIR/Greenlight.iconset"
+ICON_PATH="$RESOURCES_DIR/Greenlight.icns"
 
 cd "$ROOT_DIR"
 
@@ -31,6 +33,9 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$EXECUTABLE" "$MACOS_DIR/GreenlightApp"
 chmod +x "$MACOS_DIR/GreenlightApp"
 
+swift "$ROOT_DIR/scripts/make-app-icon.swift" "$ICONSET_DIR" "$ICON_PATH"
+rm -rf "$ICONSET_DIR"
+
 cat > "$CONTENTS_DIR/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -42,6 +47,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<'PLIST'
     <string>Greenlight</string>
     <key>CFBundleExecutable</key>
     <string>GreenlightApp</string>
+    <key>CFBundleIconFile</key>
+    <string>Greenlight</string>
     <key>CFBundleIdentifier</key>
     <string>com.projectgreenlight.Greenlight</string>
     <key>CFBundleInfoDictionaryVersion</key>
