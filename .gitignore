@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+DerivedData/
+.superpowers/
+
+outputs/Greenlight.app/
+outputs/*.zip
+
+.DS_Store
+*.xcuserstate
+*.xcuserdata/
+*.swp
