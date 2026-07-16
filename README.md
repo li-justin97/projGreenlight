@@ -10,6 +10,7 @@ Project Greenlight is a macOS menu bar companion for AI coding agents. It shows 
 - Playful traffic-light mascot with face and subtle motion
 - Preferences for count display, mascot, escalation timing, and demo mode
 - JSONL event bridge for hook-based integrations
+- Local Claude Code and Codex connection installer with config backups
 - Swift tests for status aggregation, event parsing, bridge polling, and escalation
 
 ## Run Locally
@@ -62,17 +63,18 @@ Supported tools:
 - `codex`
 - `other`
 
-## Claude and Codex Connection Status
+## Claude and Codex Connections
 
-Greenlight has the local event bridge and UI plumbing now. It does not yet automatically install Claude Code or Codex hooks.
+Greenlight can connect to Claude Code and Codex from onboarding or Preferences.
 
-Current options:
+The installer is local and reversible:
 
-- Manual/test integration: append JSONL events to the bridge file.
-- Claude Code next step: install hooks for lifecycle events such as `SessionStart`, `Notification`, `Stop`, and `StopFailure`.
-- Codex next step: add a supported hook or wrapper once the local Codex extension point is confirmed.
+- Claude Code: Greenlight updates `~/.claude/settings.json` with hook commands for `SessionStart`, `Notification`, `Stop`, and `StopFailure`.
+- Codex: Greenlight updates `~/.codex/config.toml` with a `notify` wrapper. If a notify command already exists, the wrapper calls it first, then sends Greenlight an update.
+- Backups: Greenlight copies each config file before editing it and writes helper scripts to `~/Library/Application Support/Greenlight/`.
+- Test signal: onboarding and Preferences include a button that appends a real test event to the bridge so the menu bar light changes immediately.
 
-For now, onboarding shows where the bridge lives and how hooks should report status. The automatic “Connect Claude / Connect Codex” installer is still future work.
+Demo mode is turned off after a successful connection or test signal so real events become the main source of status.
 
 ## Release Notes
 

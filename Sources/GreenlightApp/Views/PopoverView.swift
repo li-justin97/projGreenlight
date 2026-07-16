@@ -6,6 +6,11 @@ struct PopoverView: View {
     @ObservedObject var settings: AppSettings
 
     let bridgePath: String
+    let connectionStatus: AgentConnectionStatus
+    let onRefreshConnectionStatus: () -> AgentConnectionStatus
+    let onConnectClaude: () -> ConnectionInstallResult
+    let onConnectCodex: () -> ConnectionInstallResult
+    let onSendTestSignal: () -> ConnectionInstallResult
     let onOpenPreferences: () -> Void
     let onRegisterSession: () -> Void
     let onJump: (AgentSession) -> Void
@@ -15,7 +20,15 @@ struct PopoverView: View {
     var body: some View {
         VStack(spacing: 0) {
             if !settings.onboardingComplete {
-                OnboardingView(settings: settings, bridgePath: bridgePath)
+                OnboardingView(
+                    settings: settings,
+                    bridgePath: bridgePath,
+                    connectionStatus: connectionStatus,
+                    onRefreshConnectionStatus: onRefreshConnectionStatus,
+                    onConnectClaude: onConnectClaude,
+                    onConnectCodex: onConnectCodex,
+                    onSendTestSignal: onSendTestSignal
+                )
             } else {
                 HeaderView(status: store.aggregateStatus, summary: summaryLine, playfulMascot: settings.playfulMascot)
                     .padding(.horizontal, 16)
@@ -402,8 +415,33 @@ private struct FooterView: View {
 private struct OnboardingView: View {
     @ObservedObject var settings: AppSettings
     let bridgePath: String
-    @State private var selectedClaude = true
-    @State private var selectedCodex = true
+    let connectionStatus: AgentConnectionStatus
+    let onRefreshConnectionStatus: () -> AgentConnectionStatus
+    let onConnectClaude: () -> ConnectionInstallResult
+    let onConnectCodex: () -> ConnectionInstallResult
+    let onSendTestSignal: () -> ConnectionInstallResult
+
+    @State private var status: AgentConnectionStatus
+    @State private var message = "Connect your agents, then send a test signal."
+
+    init(
+        settings: AppSettings,
+        bridgePath: String,
+        connectionStatus: AgentConnectionStatus,
+        onRefreshConnectionStatus: @escaping () -> AgentConnectionStatus,
+        onConnectClaude: @escaping () -> ConnectionInstallResult,
+        onConnectCodex: @escaping () -> ConnectionInstallResult,
+        onSendTestSignal: @escaping () -> ConnectionInstallResult
+    ) {
+        self.settings = settings
+        self.bridgePath = bridgePath
+        self.connectionStatus = connectionStatus
+        self.onRefreshConnectionStatus = onRefreshConnectionStatus
+        self.onConnectClaude = onConnectClaude
+        self.onConnectCodex = onConnectCodex
+        self.onSendTestSignal = onSendTestSignal
+        _status = State(initialValue: connectionStatus)
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -420,8 +458,33 @@ private struct OnboardingView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Claude Code", isOn: $selectedClaude)
-                Toggle("Codex", isOn: $selectedCodex)
+                ConnectionRow(
+                    title: "Claude Code",
+                    connected: status.claudeInstalled,
+                    action: {
+                        message = onConnectClaude().message
+                        status = onRefreshConnectionStatus()
+                    }
+                )
+                ConnectionRow(
+                    title: "Codex",
+                    connected: status.codexInstalled,
+                    action: {
+                        message = onConnectCodex().message
+                        status = onRefreshConnectionStatus()
+                    }
+                )
+                Button("Send test signal") {
+                    message = onSendTestSignal().message
+                    status = onRefreshConnectionStatus()
+                }
+                .buttonStyle(.bordered)
+                .padding(.top, 4)
+
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 Text("Bridge file:")
                     .font(.caption.bold())
                     .padding(.top, 4)
@@ -441,5 +504,28 @@ private struct OnboardingView: View {
             .controlSize(.large)
         }
         .padding(22)
+        .onAppear {
+            status = onRefreshConnectionStatus()
+        }
+    }
+}
+
+private struct ConnectionRow: View {
+    let title: String
+    let connected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(connected ? Color.green : Color.secondary.opacity(0.35))
+                .frame(width: 9, height: 9)
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+            Spacer()
+            Button(connected ? "Reconnect" : "Connect", action: action)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+        }
     }
 }

@@ -7,6 +7,7 @@ import SwiftUI
 final class GreenlightAppController: NSObject, NSApplicationDelegate {
     private let store = SessionStore()
     private let bridge = EventBridge()
+    private let connectionInstaller = AgentConnectionInstaller()
     private let settings = AppSettings()
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let popover = NSPopover()
@@ -52,6 +53,11 @@ final class GreenlightAppController: NSObject, NSApplicationDelegate {
                 store: store,
                 settings: settings,
                 bridgePath: bridge.fileURL.path,
+                connectionStatus: connectionInstaller.status(),
+                onRefreshConnectionStatus: { [weak self] in self?.connectionInstaller.status() ?? AgentConnectionStatus(claudeInstalled: false, codexInstalled: false) },
+                onConnectClaude: { [weak self] in self?.installClaudeConnection() ?? ConnectionInstallResult(installed: false, message: "Greenlight is still starting up.") },
+                onConnectCodex: { [weak self] in self?.installCodexConnection() ?? ConnectionInstallResult(installed: false, message: "Greenlight is still starting up.") },
+                onSendTestSignal: { [weak self] in self?.sendConnectionTestSignal() ?? ConnectionInstallResult(installed: false, message: "Greenlight is still starting up.") },
                 onOpenPreferences: { [weak self] in self?.openPreferences() },
                 onRegisterSession: { [weak self] in self?.revealBridgeFile() },
                 onJump: { [weak self] session in self?.jump(to: session) },
@@ -117,7 +123,15 @@ final class GreenlightAppController: NSObject, NSApplicationDelegate {
         }
 
         let controller = NSHostingController(
-            rootView: PreferencesView(settings: settings, bridgePath: bridge.fileURL.path)
+            rootView: PreferencesView(
+                settings: settings,
+                bridgePath: bridge.fileURL.path,
+                connectionStatus: connectionInstaller.status(),
+                onRefreshConnectionStatus: { [weak self] in self?.connectionInstaller.status() ?? AgentConnectionStatus(claudeInstalled: false, codexInstalled: false) },
+                onConnectClaude: { [weak self] in self?.installClaudeConnection() ?? ConnectionInstallResult(installed: false, message: "Greenlight is still starting up.") },
+                onConnectCodex: { [weak self] in self?.installCodexConnection() ?? ConnectionInstallResult(installed: false, message: "Greenlight is still starting up.") },
+                onSendTestSignal: { [weak self] in self?.sendConnectionTestSignal() ?? ConnectionInstallResult(installed: false, message: "Greenlight is still starting up.") }
+            )
         )
         let window = NSWindow(contentViewController: controller)
         window.title = "Greenlight Preferences"
@@ -136,6 +150,39 @@ final class GreenlightAppController: NSObject, NSApplicationDelegate {
         } catch {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(bridge.fileURL.path, forType: .string)
+        }
+    }
+
+    private func installClaudeConnection() -> ConnectionInstallResult {
+        do {
+            let result = try connectionInstaller.installClaude()
+            settings.demoMode = false
+            store.clearDemoSessions()
+            return result
+        } catch {
+            return ConnectionInstallResult(installed: false, message: "Could not connect Claude Code: \(error.localizedDescription)")
+        }
+    }
+
+    private func installCodexConnection() -> ConnectionInstallResult {
+        do {
+            let result = try connectionInstaller.installCodex()
+            settings.demoMode = false
+            store.clearDemoSessions()
+            return result
+        } catch {
+            return ConnectionInstallResult(installed: false, message: "Could not connect Codex: \(error.localizedDescription)")
+        }
+    }
+
+    private func sendConnectionTestSignal() -> ConnectionInstallResult {
+        do {
+            let result = try connectionInstaller.sendTestEvent(tool: .codex, project: "Greenlight test")
+            settings.demoMode = false
+            pollBridge()
+            return result
+        } catch {
+            return ConnectionInstallResult(installed: false, message: "Could not send test signal: \(error.localizedDescription)")
         }
     }
 
