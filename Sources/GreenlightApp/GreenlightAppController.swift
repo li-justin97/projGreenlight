@@ -187,10 +187,7 @@ final class GreenlightAppController: NSObject, NSApplicationDelegate {
     }
 
     private func jump(to session: AgentSession) {
-        if let jumpTarget = session.jumpTarget {
-            let url = URL(fileURLWithPath: jumpTarget)
-            NSWorkspace.shared.open(url)
-        }
+        launch(AgentLaunchPlanner.plan(for: session))
 
         store.apply(
             event: GreenlightEvent(
@@ -203,6 +200,38 @@ final class GreenlightAppController: NSObject, NSApplicationDelegate {
             )
         )
         updateStatusItem()
+    }
+
+    private func launch(_ plan: AgentLaunchPlan) {
+        switch plan {
+        case .application(let path):
+            let appURL = URL(fileURLWithPath: path)
+            let configuration = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.openApplication(at: appURL, configuration: configuration)
+        case .terminal(let command):
+            runTerminalCommand(command)
+        case .file(let path):
+            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+        case .none:
+            break
+        }
+    }
+
+    private func runTerminalCommand(_ command: String) {
+        let script = """
+        tell application "Terminal"
+            activate
+            do script "\(escapedAppleScriptString(command))"
+        end tell
+        """
+
+        NSAppleScript(source: script)?.executeAndReturnError(nil)
+    }
+
+    private func escapedAppleScriptString(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
     }
 
     private func handleDemoAction(_ action: DemoAction) {
