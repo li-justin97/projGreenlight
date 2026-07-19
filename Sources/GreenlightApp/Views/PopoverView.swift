@@ -270,12 +270,8 @@ private struct SessionRow: View {
     var body: some View {
         HStack(spacing: 11) {
             ZStack(alignment: .bottomTrailing) {
-                Text(session.tool.tag)
-                    .font(.system(size: 10.5, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                AgentBadgeView(tool: session.tool)
                     .frame(width: 32, height: 32)
-                    .background(Color.secondary.opacity(0.11))
-                    .clipShape(RoundedRectangle(cornerRadius: 9))
 
                 Circle()
                     .fill(stateColor)
@@ -367,6 +363,102 @@ private extension AggregateStatus {
         case .green: return .green
         case .done: return .blue
         case .gray: return .gray
+        }
+    }
+}
+
+private struct AgentBadgeView: View {
+    let tool: AgentTool
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 9)
+                .fill(background)
+
+            switch tool {
+            case .claude:
+                ClaudeMark()
+                    .frame(width: 18, height: 18)
+            case .codex:
+                CodexMark()
+                    .frame(width: 19, height: 17)
+            case .other:
+                Image(systemName: "sparkle")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 9)
+                .stroke(border, lineWidth: 1)
+        )
+        .help(tool.displayName)
+    }
+
+    private var background: Color {
+        switch tool {
+        case .claude:
+            return Color(red: 0.98, green: 0.91, blue: 0.82)
+        case .codex:
+            return Color(red: 0.10, green: 0.12, blue: 0.14)
+        case .other:
+            return Color.secondary.opacity(0.11)
+        }
+    }
+
+    private var border: Color {
+        switch tool {
+        case .claude:
+            return Color(red: 0.78, green: 0.45, blue: 0.25).opacity(0.2)
+        case .codex:
+            return Color.white.opacity(0.08)
+        case .other:
+            return Color.secondary.opacity(0.06)
+        }
+    }
+}
+
+private struct ClaudeMark: View {
+    var body: some View {
+        ZStack {
+            ForEach(0..<6, id: \.self) { index in
+                Capsule()
+                    .fill(Color(red: 0.72, green: 0.35, blue: 0.18))
+                    .frame(width: 5, height: 14)
+                    .offset(y: -4)
+                    .rotationEffect(.degrees(Double(index) * 60))
+            }
+
+            Circle()
+                .fill(Color(red: 0.98, green: 0.91, blue: 0.82))
+                .frame(width: 6, height: 6)
+        }
+    }
+}
+
+private struct CodexMark: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(red: 0.06, green: 0.07, blue: 0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Color.green.opacity(0.35), lineWidth: 1)
+                )
+
+            HStack(spacing: 2) {
+                Path { path in
+                    path.move(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: 5, y: 4))
+                    path.addLine(to: CGPoint(x: 0, y: 8))
+                }
+                .stroke(Color.green, style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+                .frame(width: 6, height: 8)
+
+                Capsule()
+                    .fill(Color.green.opacity(0.9))
+                    .frame(width: 7, height: 2)
+            }
         }
     }
 }
