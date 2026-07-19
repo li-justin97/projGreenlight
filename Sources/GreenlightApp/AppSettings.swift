@@ -23,6 +23,10 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(onboardingComplete, forKey: Keys.onboardingComplete) }
     }
 
+    @Published var connectionOnboardingComplete: Bool {
+        didSet { defaults.set(connectionOnboardingComplete, forKey: Keys.connectionOnboardingComplete) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -32,6 +36,7 @@ final class AppSettings: ObservableObject {
         self.escalationDelay = defaults.object(forKey: Keys.escalationDelay) as? TimeInterval ?? 600
         self.demoMode = defaults.object(forKey: Keys.demoMode) as? Bool ?? true
         self.onboardingComplete = defaults.object(forKey: Keys.onboardingComplete) as? Bool ?? false
+        self.connectionOnboardingComplete = defaults.object(forKey: Keys.connectionOnboardingComplete) as? Bool ?? false
     }
 
     private enum Keys {
@@ -40,5 +45,6 @@ final class AppSettings: ObservableObject {
         static let escalationDelay = "escalationDelay"
         static let demoMode = "demoMode"
         static let onboardingComplete = "onboardingComplete"
+        static let connectionOnboardingComplete = "connectionOnboardingComplete"
     }
 }

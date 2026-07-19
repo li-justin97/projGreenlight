@@ -19,7 +19,10 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !settings.onboardingComplete {
+            if OnboardingGate.shouldShowOnboarding(
+                appOnboardingComplete: settings.onboardingComplete,
+                connectionOnboardingComplete: settings.connectionOnboardingComplete
+            ) {
                 OnboardingView(
                     settings: settings,
                     bridgePath: bridgePath,
@@ -475,8 +478,13 @@ private struct OnboardingView: View {
                     }
                 )
                 Button("Send test signal") {
-                    message = onSendTestSignal().message
+                    let result = onSendTestSignal()
+                    message = result.message
                     status = onRefreshConnectionStatus()
+                    if result.installed {
+                        settings.onboardingComplete = true
+                        settings.connectionOnboardingComplete = true
+                    }
                 }
                 .buttonStyle(.bordered)
                 .padding(.top, 4)
@@ -499,6 +507,7 @@ private struct OnboardingView: View {
 
             Button("Open Greenlight") {
                 settings.onboardingComplete = true
+                settings.connectionOnboardingComplete = true
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
